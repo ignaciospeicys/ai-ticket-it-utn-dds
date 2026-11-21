@@ -4,6 +4,7 @@ import { api } from "../../api";
 import { useResource } from "../../useResource";
 import { useSession } from "../../session";
 import { statuses } from "../../purchaseStatus";
+import { ReviewForm } from "../../reviewForm";
 import { Action, Card, Copy, ErrorText, Screen, Title, dateLabel, money } from "../../ui";
 
 export default function PurchaseDetail() {
@@ -13,6 +14,7 @@ export default function PurchaseDetail() {
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
+  const [reviewSaved, setReviewSaved] = useState(false);
   const data = purchase.data;
 
   async function submit(action) {
@@ -53,6 +55,8 @@ export default function PurchaseDetail() {
           </Card> : <Action secondary disabled={saving} onPress={() => setConfirmCancel(true)}>Cancelar compra</Action>
         )}
         <Action secondary onPress={() => router.push(`/messages/${id}`)}>Ver mensajes</Action>
+        {data.canReview && <ReviewForm purchase={data} user={user} onSaved={() => { setReviewSaved(true); purchase.reload(); }} />}
+        {reviewSaved && <Copy>Reseña publicada.</Copy>}
       </>}
     </Screen>
   );

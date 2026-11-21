@@ -76,6 +76,15 @@ export default function EventDetail() {
           <Copy>Total {money(count * selected.price)}</Copy>
           <Action disabled={saving || count < 1 || count > selected.available} onPress={reserve}>Reservar entradas</Action>
         </>}
+        <Title>Reseñas del organizador</Title>
+        {data.reviews.length === 0 && <Copy>Todavía no hay reseñas de eventos anteriores.</Copy>}
+        {data.reviews.map((review) => (
+          <Card key={review.id}>
+            <Copy>{review.eventTitle} · {review.rating}/5</Copy>
+            <Copy>{review.comment}</Copy>
+            <Copy>{review.authorName}</Copy>
+          </Card>
+        ))}
       </>}
     </Screen>
   );

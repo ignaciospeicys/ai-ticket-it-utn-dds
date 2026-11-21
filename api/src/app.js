@@ -4,6 +4,7 @@ import { describeEvent, getEvent, listEvents, publishEvent } from "./catalog.js"
 import { HttpError, requireRole } from "./http.js";
 import { availability, cancel, describePurchase, eventSales, markUsed, pay, purchaseForParticipant, reserve } from "./purchases.js";
 import { listMessages, sendMessage } from "./messages.js";
+import { priorReviews, publishReview, reviewEligibility } from "./reviews.js";
 
 export function createApp({ store = createStore(), clock = () => new Date() } = {}) {
   const app = express();
@@ -28,10 +29,12 @@ export function createApp({ store = createStore(), clock = () => new Date() } = 
   });
   app.get("/events/:id", (req, res) => {
     const event = getEvent(store, req.params.id);
+    const now = clock();
     res.json({
       ...describeEvent(store, event),
       tickets: availability(store, event),
-      salesOpen: Date.parse(event.date) > clock().getTime(),
+      salesOpen: Date.parse(event.date) > now.getTime(),
+      reviews: priorReviews(store, event, now),
     });
   });
   app.use((req, _res, next) => {
@@ -70,7 +73,12 @@ export function createApp({ store = createStore(), clock = () => new Date() } = 
       .map((purchase) => describePurchase(store, purchase, now)));
   });
   app.get("/purchases/:id", (req, res) => {
-    res.json(describePurchase(store, purchaseForParticipant(store, req.params.id, req.user), clock()));
+    const purchase = purchaseForParticipant(store, req.params.id, req.user);
+    const now = clock();
+    res.json({
+      ...describePurchase(store, purchase, now),
+      canReview: req.user.role === "buyer" && reviewEligibility(store, purchase, now),
+    });
   });
   app.post("/purchases/:id/pay", requireRole("buyer"), (req, res) => {
     res.json(pay(store, req.user, req.params.id, clock()));
@@ -86,6 +94,9 @@ export function createApp({ store = createStore(), clock = () => new Date() } = 
   });
   app.post("/purchases/:id/messages", (req, res) => {
     res.status(201).json(sendMessage(store, req.user, req.params.id, req.body?.text, clock()));
+  });
+  app.post("/purchases/:id/reviews", requireRole("buyer"), (req, res) => {
+    res.status(201).json(publishReview(store, req.user, req.params.id, req.body ?? {}, clock()));
   });
   app.get("/organizer/events/:id/sales", requireRole("organizer"), (req, res) => {
     res.json(eventSales(store, req.user, req.params.id, clock()));
