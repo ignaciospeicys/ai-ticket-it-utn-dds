@@ -15,7 +15,7 @@ export default function Organizer() {
       {events.loading && <Copy>Cargando eventos…</Copy>}
       <ErrorText error={events.error} />
       {events.data?.length === 0 && <Copy>Todavía no publicaste eventos.</Copy>}
-      {events.data?.map((event) => <EventCard key={event.id} event={event} />)}
+      {events.data?.map((event) => <EventCard key={event.id} event={event} organizer />)}
     </Screen>
   );
 }

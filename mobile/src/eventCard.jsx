@@ -1,7 +1,7 @@
 import { router } from "expo-router";
 import { Action, Card, Copy, Title, dateLabel, money } from "./ui";
 
-export function EventCard({ event }) {
+export function EventCard({ event, organizer = false }) {
   return (
     <Card>
       <Copy>{event.category} · {dateLabel(event.date)}</Copy>
@@ -9,6 +9,7 @@ export function EventCard({ event }) {
       <Copy>{event.organizerName} · Desde {money(event.minPrice)}</Copy>
       {event.organizerRating !== null && <Copy>Puntaje del organizador {event.organizerRating.toFixed(1)}/5</Copy>}
       <Action secondary onPress={() => router.push(`/events/${event.id}`)}>Ver evento</Action>
+      {organizer && <Action onPress={() => router.push(`/sales/${event.id}`)}>Ver ventas</Action>}
     </Card>
   );
 }

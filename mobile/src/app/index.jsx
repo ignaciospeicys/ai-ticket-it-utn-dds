@@ -21,6 +21,7 @@ export default function Home() {
           {user.role === "buyer" ? <>
             <Action onPress={() => router.push("/catalog")}>Explorar eventos</Action>
             <Action secondary onPress={() => router.push("/favorites")}>Favoritos</Action>
+            <Action secondary onPress={() => router.push("/purchases")}>Mis compras</Action>
           </> : <Action onPress={() => router.push("/organizer")}>Mis eventos</Action>}
           <Action secondary onPress={() => setUser(null)}>Cambiar de cuenta</Action>
         </Card>
