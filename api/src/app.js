@@ -1,20 +1,57 @@
 import express from "express";
 import { createStore } from "./store.js";
-import { listEvents } from "./catalog.js";
-import { HttpError } from "./http.js";
+import { describeEvent, getEvent, listEvents, publishEvent } from "./catalog.js";
+import { HttpError, requireRole } from "./http.js";
 
-export function createApp({ store = createStore() } = {}) {
+export function createApp({ store = createStore(), clock = () => new Date() } = {}) {
   const app = express();
+  app.use((req, res, next) => {
+    const origin = req.get("origin");
+    res.vary("Origin");
+    if (origin && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
+      res.set("Access-Control-Allow-Origin", origin);
+      res.set("Access-Control-Allow-Headers", "Content-Type, X-Demo-User");
+      res.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+      if (req.method === "OPTIONS") return res.sendStatus(204);
+    }
+    next();
+  });
   app.use(express.json({ limit: "64kb" }));
   app.get("/health", (_req, res) => res.json({ status: "ok" }));
   app.get("/demo/users", (_req, res) => res.json(store.users.filter(({ id }) => id !== "other")));
-  app.get("/events", (req, res) => res.json(listEvents(store, req.query)));
+  app.get("/categories", (_req, res) => res.json([...new Set(store.events.map(({ category }) => category))].sort()));
+  app.get("/events", (req, res) => {
+    const upcoming = store.events.filter((event) => Date.parse(event.date) >= clock().getTime());
+    res.json(listEvents(store, req.query, upcoming));
+  });
+  app.get("/events/:id", (req, res) => res.json(describeEvent(store, getEvent(store, req.params.id))));
   app.use((req, _res, next) => {
     req.user = store.users.find(({ id }) => id === req.get("x-demo-user"));
     if (!req.user) throw new HttpError(401, "Elegí una identidad de demo.");
     next();
   });
   app.get("/me", (req, res) => res.json(req.user));
+  app.get("/favorites", requireRole("buyer"), (req, res) => {
+    const favorites = store.favorites.get(req.user.id);
+    res.json(listEvents(store, {}, store.events.filter(({ id }) => favorites?.has(id))));
+  });
+  app.put("/favorites/:id", requireRole("buyer"), (req, res) => {
+    const event = getEvent(store, req.params.id);
+    const favorites = store.favorites.get(req.user.id) ?? new Set();
+    favorites.add(event.id);
+    store.favorites.set(req.user.id, favorites);
+    res.sendStatus(204);
+  });
+  app.delete("/favorites/:id", requireRole("buyer"), (req, res) => {
+    store.favorites.get(req.user.id)?.delete(req.params.id);
+    res.sendStatus(204);
+  });
+  app.get("/organizer/events", requireRole("organizer"), (req, res) => {
+    res.json(listEvents(store, {}, store.events.filter(({ organizerId }) => organizerId === req.user.id)));
+  });
+  app.post("/events", requireRole("organizer"), (req, res) => {
+    res.status(201).json(publishEvent(store, req.user, req.body, clock()));
+  });
   app.use((_req, _res, next) => next(new HttpError(404, "Ruta inexistente.")));
   app.use((error, _req, res, _next) => {
     const status = error.status ?? 500;
