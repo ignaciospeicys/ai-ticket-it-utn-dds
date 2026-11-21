@@ -2,7 +2,8 @@ import express from "express";
 import { createStore } from "./store.js";
 import { describeEvent, getEvent, listEvents, publishEvent } from "./catalog.js";
 import { HttpError, requireRole } from "./http.js";
-import { availability, describePurchase, eventSales, pay, purchaseForParticipant, reserve } from "./purchases.js";
+import { availability, cancel, describePurchase, eventSales, markUsed, pay, purchaseForParticipant, reserve } from "./purchases.js";
+import { listMessages, sendMessage } from "./messages.js";
 
 export function createApp({ store = createStore(), clock = () => new Date() } = {}) {
   const app = express();
@@ -73,6 +74,18 @@ export function createApp({ store = createStore(), clock = () => new Date() } = 
   });
   app.post("/purchases/:id/pay", requireRole("buyer"), (req, res) => {
     res.json(pay(store, req.user, req.params.id, clock()));
+  });
+  app.post("/purchases/:id/cancel", requireRole("buyer"), (req, res) => {
+    res.json(cancel(store, req.user, req.params.id, clock()));
+  });
+  app.post("/purchases/:id/use", requireRole("organizer"), (req, res) => {
+    res.json(markUsed(store, req.user, req.params.id, clock()));
+  });
+  app.get("/purchases/:id/messages", (req, res) => {
+    res.json(listMessages(store, req.user, req.params.id));
+  });
+  app.post("/purchases/:id/messages", (req, res) => {
+    res.status(201).json(sendMessage(store, req.user, req.params.id, req.body?.text, clock()));
   });
   app.get("/organizer/events/:id/sales", requireRole("organizer"), (req, res) => {
     res.json(eventSales(store, req.user, req.params.id, clock()));

@@ -1,18 +1,36 @@
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
+import { useState } from "react";
+import { api } from "../../api";
 import { useResource } from "../../useResource";
 import { useSession } from "../../session";
 import { statuses } from "../../purchaseStatus";
-import { Card, Copy, ErrorText, Screen, Title } from "../../ui";
+import { Action, Card, Copy, ErrorText, Screen, Title } from "../../ui";
 
 export default function Sales() {
   const { id } = useLocalSearchParams();
   const { user } = useSession();
   const sales = useResource(user?.role === "organizer" && id ? `/organizer/events/${id}/sales` : null, user);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  async function markTicketUsed(purchaseId) {
+    setError("");
+    setSaving(true);
+    try {
+      await api(`/purchases/${purchaseId}/use`, { user, method: "POST" });
+      sales.reload();
+    } catch (failure) {
+      setError(failure.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <Screen>
       {user?.role !== "organizer" && <Copy>Elegí una cuenta de organizador en el inicio.</Copy>}
       {sales.loading && <Copy>Cargando ventas…</Copy>}
-      <ErrorText error={sales.error} />
+      <ErrorText error={sales.error || error} />
       {sales.data && <>
         <Title>{sales.data.title}</Title>
         <Card>
@@ -27,6 +45,8 @@ export default function Sales() {
           <Card key={purchase.id}>
             <Copy>{purchase.buyerName} · {purchase.quantity} × {purchase.ticketName}</Copy>
             <Copy>{statuses[purchase.status]}</Copy>
+            {purchase.canUse && <Action disabled={saving} onPress={() => markTicketUsed(purchase.id)}>Marcar utilizada</Action>}
+            <Action secondary onPress={() => router.push(`/messages/${purchase.id}`)}>Ver mensajes</Action>
           </Card>
         ))}
       </>}

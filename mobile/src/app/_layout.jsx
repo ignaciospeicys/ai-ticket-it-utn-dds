@@ -14,6 +14,7 @@ export default function Layout() {
         <Stack.Screen name="purchases/index" options={{ title: "Mis compras" }} />
         <Stack.Screen name="purchases/[id]" options={{ title: "Compra" }} />
         <Stack.Screen name="sales/[id]" options={{ title: "Ventas" }} />
+        <Stack.Screen name="messages/[id]" options={{ title: "Mensajes" }} />
       </Stack>
     </SessionProvider>
   );

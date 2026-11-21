@@ -3,6 +3,10 @@ import { getEvent } from "./catalog.js";
 import { findRecord, HttpError } from "./http.js";
 
 const occupying = new Set(["PENDING", "CONFIRMED", "USED"]);
+const eventDay = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "America/Argentina/Buenos_Aires",
+  year: "numeric", month: "2-digit", day: "2-digit",
+});
 
 export function availability(store, event) {
   const reserved = new Map();
@@ -35,10 +39,41 @@ export function describePurchase(store, purchase, now) {
     ticketName: ticket.name,
     buyerName: buyer.name,
     total: purchase.quantity * purchase.unitPrice,
+    canCancel: canCancel(purchase, event, now),
+    canUse: canUse(purchase, event, now),
     daysLeft: purchase.status === "CONFIRMED"
       ? Math.max(0, Math.ceil((Date.parse(event.date) - now.getTime()) / 86_400_000))
       : null,
   };
+}
+
+function canCancel(purchase, event, now) {
+  return ["PENDING", "CONFIRMED"].includes(purchase.status) && Date.parse(event.date) > now.getTime();
+}
+
+function canUse(purchase, event, now) {
+  return purchase.status === "CONFIRMED" && (
+    now.getTime() >= Date.parse(event.date) ||
+    eventDay.format(now) === eventDay.format(new Date(event.date))
+  );
+}
+
+export function cancel(store, user, id, now) {
+  const purchase = purchaseForParticipant(store, id, user);
+  if (!canCancel(purchase, getEvent(store, purchase.eventId), now)) {
+    throw new HttpError(409, "Esta compra ya no admite cancelación.");
+  }
+  purchase.status = purchase.status === "CONFIRMED" ? "REFUNDED" : "CANCELED";
+  return describePurchase(store, purchase, now);
+}
+
+export function markUsed(store, user, id, now) {
+  const purchase = purchaseForParticipant(store, id, user);
+  if (!canUse(purchase, getEvent(store, purchase.eventId), now)) {
+    throw new HttpError(409, "Solo podés usar una compra confirmada a partir del día del evento.");
+  }
+  purchase.status = "USED";
+  return describePurchase(store, purchase, now);
 }
 
 export function reserve(store, user, eventId, { ticketId, quantity } = {}, now) {

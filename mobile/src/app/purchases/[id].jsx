@@ -1,4 +1,4 @@
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { api } from "../../api";
 import { useResource } from "../../useResource";
@@ -12,13 +12,15 @@ export default function PurchaseDetail() {
   const purchase = useResource(user && id ? `/purchases/${id}` : null, user);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [confirmCancel, setConfirmCancel] = useState(false);
   const data = purchase.data;
 
-  async function pay() {
+  async function submit(action) {
     setError("");
     setSaving(true);
     try {
-      await api(`/purchases/${id}/pay`, { user, method: "POST" });
+      await api(`/purchases/${id}/${action}`, { user, method: "POST" });
+      setConfirmCancel(false);
       purchase.reload();
     } catch (failure) {
       setError(failure.message);
@@ -40,7 +42,17 @@ export default function PurchaseDetail() {
           <Copy>{dateLabel(data.eventDate)}</Copy>
           {data.daysLeft !== null && <Copy>Faltan {data.daysLeft} días para el evento.</Copy>}
         </Card>
-        {user.role === "buyer" && data.status === "PENDING" && <Action disabled={saving} onPress={pay}>Simular pago</Action>}
+        {user.role === "buyer" && data.status === "PENDING" && data.canCancel && (
+          <Action disabled={saving} onPress={() => submit("pay")}>Simular pago</Action>
+        )}
+        {user.role === "buyer" && data.canCancel && (
+          confirmCancel ? <Card>
+            <Copy>La entrada vuelve a estar disponible. Si ya pagaste, se registra un reembolso simulado.</Copy>
+            <Action disabled={saving} onPress={() => submit("cancel")}>Confirmar cancelación</Action>
+            <Action secondary disabled={saving} onPress={() => setConfirmCancel(false)}>Conservar compra</Action>
+          </Card> : <Action secondary disabled={saving} onPress={() => setConfirmCancel(true)}>Cancelar compra</Action>
+        )}
+        <Action secondary onPress={() => router.push(`/messages/${id}`)}>Ver mensajes</Action>
       </>}
     </Screen>
   );
