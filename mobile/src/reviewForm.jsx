@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { api } from "./api";
-import { Action, Card, ErrorText, Field, Title } from "./ui";
+import { Action, Card, ErrorText, Field, Muted, Segmented, Title } from "./ui";
+
+const ratings = ["1", "2", "3", "4", "5"].map((value) => [value, value]);
 
 export function ReviewForm({ purchase, user, onSaved }) {
   const [rating, setRating] = useState("");
@@ -26,7 +28,8 @@ export function ReviewForm({ purchase, user, onSaved }) {
   return (
     <Card>
       <Title>Calificá el evento</Title>
-      <Field label="Puntaje de 1 a 5" keyboardType="number-pad" maxLength={1} value={rating} onChangeText={setRating} />
+      <Muted>Puntaje de 1 a 5</Muted>
+      <Segmented label="Puntaje de 1 a 5" options={ratings} value={rating} onChange={setRating} />
       <Field label="Comentario" multiline maxLength={1000} value={comment} onChangeText={setComment} />
       <ErrorText error={error} />
       <Action disabled={saving || !/^[1-5]$/.test(rating) || !comment.trim()} onPress={submit}>Publicar reseña</Action>

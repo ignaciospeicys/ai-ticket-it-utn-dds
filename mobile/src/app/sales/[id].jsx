@@ -1,17 +1,20 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
+import { Text } from "react-native";
 import { api } from "../../api";
 import { useResource } from "../../useResource";
-import { useSession } from "../../session";
-import { statuses } from "../../purchaseStatus";
-import { Action, Card, Copy, ErrorText, Screen, Title } from "../../ui";
+import { useRedirect, useSession } from "../../session";
+import { statuses, statusTones } from "../../purchaseStatus";
+import { Action, Badge, Card, Copy, ErrorText, Grow, Heading, Muted, Row, Screen, colors } from "../../ui";
 
 export default function Sales() {
   const { id } = useLocalSearchParams();
   const { user } = useSession();
+  const redirect = useRedirect("organizer");
   const sales = useResource(user?.role === "organizer" && id ? `/organizer/events/${id}/sales` : null, user);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  if (redirect) return redirect;
 
   async function markTicketUsed(purchaseId) {
     setError("");
@@ -28,25 +31,32 @@ export default function Sales() {
 
   return (
     <Screen>
-      {user?.role !== "organizer" && <Copy>Elegí una cuenta de organizador en el inicio.</Copy>}
       {sales.loading && <Copy>Cargando ventas…</Copy>}
       <ErrorText error={sales.error || error} />
       {sales.data && <>
-        <Title>{sales.data.title}</Title>
+        <Text accessibilityRole="header" style={{ color: colors.ink, fontSize: 24, lineHeight: 30, fontWeight: "700" }}>{sales.data.title}</Text>
+        <Heading>Disponibilidad</Heading>
         <Card>
-          <Title>Disponibilidad</Title>
           {sales.data.tickets.map((ticket) => (
-            <Copy key={ticket.id}>{ticket.name} · {ticket.available} de {ticket.capacity} disponibles</Copy>
+            <Row key={ticket.id}>
+              <Grow><Copy strong>{ticket.name}</Copy></Grow>
+              <Copy>{ticket.available} de {ticket.capacity} disponibles</Copy>
+            </Row>
           ))}
         </Card>
-        <Title>Ventas</Title>
-        {sales.data.purchases.length === 0 && <Copy>Sin compras para este evento.</Copy>}
+        <Heading>Ventas</Heading>
+        {sales.data.purchases.length === 0 && <Muted>Sin compras para este evento.</Muted>}
         {sales.data.purchases.map((purchase) => (
           <Card key={purchase.id}>
-            <Copy>{purchase.buyerName} · {purchase.quantity} × {purchase.ticketName}</Copy>
-            <Copy>{statuses[purchase.status]}</Copy>
+            <Row>
+              <Grow>
+                <Copy strong>{purchase.buyerName}</Copy>
+                <Muted>{purchase.quantity} × {purchase.ticketName}</Muted>
+              </Grow>
+              <Badge tone={statusTones[purchase.status]}>{statuses[purchase.status]}</Badge>
+            </Row>
             {purchase.canUse && <Action disabled={saving} onPress={() => markTicketUsed(purchase.id)}>Marcar utilizada</Action>}
-            <Action secondary onPress={() => router.push(`/messages/${purchase.id}`)}>Ver mensajes</Action>
+            <Action secondary icon="chatbubble-outline" onPress={() => router.push(`/messages/${purchase.id}`)}>Ver mensajes</Action>
           </Card>
         ))}
       </>}

@@ -1,17 +1,18 @@
 import { router } from "expo-router";
 import { EventCard } from "../eventCard";
 import { useResource } from "../useResource";
-import { useSession } from "../session";
-import { Action, Copy, ErrorText, Screen, Title } from "../ui";
+import { useRedirect, useSession } from "../session";
+import { Action, Copy, ErrorText, Screen } from "../ui";
 
 export default function Organizer() {
   const { user } = useSession();
+  const redirect = useRedirect("organizer");
   const events = useResource(user?.role === "organizer" ? "/organizer/events" : null, user);
+  if (redirect) return redirect;
 
   return (
-    <Screen>
-      <Title>Mis eventos</Title>
-      {user?.role === "organizer" ? <Action onPress={() => router.push("/new-event")}>Publicar evento</Action> : <Copy>Elegí una cuenta de organizador en el inicio.</Copy>}
+    <Screen title="Mis eventos" subtitle={`${user.name} · Organizador`}>
+      <Action icon="add" onPress={() => router.push("/new-event")}>Publicar evento</Action>
       {events.loading && <Copy>Cargando eventos…</Copy>}
       <ErrorText error={events.error} />
       {events.data?.length === 0 && <Copy>Todavía no publicaste eventos.</Copy>}

@@ -2,8 +2,8 @@ import { useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { api } from "../../api";
 import { useResource } from "../../useResource";
-import { useSession } from "../../session";
-import { Action, Card, Copy, ErrorText, Field, Screen, Title, dateLabel } from "../../ui";
+import { useRedirect, useSession } from "../../session";
+import { Action, Card, Copy, ErrorText, Field, Muted, Screen, dateLabel } from "../../ui";
 
 export default function Messages() {
   const { id } = useLocalSearchParams();
@@ -13,6 +13,8 @@ export default function Messages() {
   const [text, setText] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const redirect = useRedirect();
+  if (redirect) return redirect;
 
   async function send() {
     setSaving(true);
@@ -30,18 +32,17 @@ export default function Messages() {
 
   return (
     <Screen>
-      <Title>Conversación de la compra</Title>
       {messages.loading && <Copy>Cargando mensajes…</Copy>}
       <ErrorText error={messages.error || error} />
       {messages.data && <>
-        {messages.data.length === 0 && <Copy>Todavía no hay mensajes.</Copy>}
+        {messages.data.length === 0 && <Muted>Todavía no hay mensajes en esta compra.</Muted>}
         {messages.data.map((message) => (
           <Card key={message.id}>
-            <Copy>{message.authorName} · {dateLabel(message.date)}</Copy>
+            <Muted>{message.authorName} · {dateLabel(message.date)}</Muted>
             <Copy>{message.text}</Copy>
           </Card>
         ))}
-        <Action secondary onPress={messages.reload}>Actualizar conversación</Action>
+        <Action secondary icon="refresh" onPress={messages.reload}>Actualizar conversación</Action>
         <Field label="Mensaje" multiline maxLength={1000} value={text} onChangeText={setText} />
         <Action disabled={!text.trim() || saving} onPress={send}>Enviar</Action>
       </>}

@@ -1,8 +1,8 @@
 import { router } from "expo-router";
 import { useState } from "react";
 import { api } from "../api";
-import { useSession } from "../session";
-import { Action, Card, Copy, ErrorText, Field, Screen, Title } from "../ui";
+import { useRedirect, useSession } from "../session";
+import { Action, Card, Copy, ErrorText, Field, Heading, Screen } from "../ui";
 
 const fields = [["title", "Título"], ["description", "Descripción"], ["category", "Categoría"], ["date", "Fecha y hora local"], ["imageUrl", "URL HTTPS de imagen (opcional)"]];
 const ticketFields = [["name", "Nombre"], ["price", "Precio en pesos"], ["capacity", "Cupo"]];
@@ -15,6 +15,8 @@ export default function NewEvent() {
   const [nextId, setNextId] = useState(1);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const redirect = useRedirect("organizer");
+  if (redirect) return redirect;
 
   async function publish() {
     setError("");
@@ -39,15 +41,14 @@ export default function NewEvent() {
 
   return (
     <Screen>
-      <Title>Publicar evento</Title>
       {fields.map(([key, label]) => (
         <Field key={key} label={label} value={form[key] ?? ""} placeholder={key === "date" ? "AAAA-MM-DD HH:mm" : undefined}
           multiline={key === "description"} onChangeText={(text) => setForm((current) => ({ ...current, [key]: text }))} />
       ))}
-      <Title>Tipos de entrada</Title>
+      <Heading>Tipos de entrada</Heading>
       {tickets.map((ticket, index) => (
         <Card key={ticket.id}>
-          <Copy>Tipo {index + 1}</Copy>
+          <Copy strong>Tipo {index + 1}</Copy>
           {ticketFields.map(([key, label]) => (
             <Field key={key} label={label} value={ticket[key]} keyboardType={key === "name" ? "default" : "decimal-pad"}
               onChangeText={(text) => setTickets((current) => current.map((item) => item.id === ticket.id ? { ...item, [key]: text } : item))} />
@@ -55,7 +56,7 @@ export default function NewEvent() {
           {tickets.length > 1 && <Action secondary onPress={() => setTickets((current) => current.filter((item) => item.id !== ticket.id))}>Quitar tipo</Action>}
         </Card>
       ))}
-      <Action secondary disabled={tickets.length >= 20} onPress={() => { setTickets([...tickets, emptyTicket(nextId)]); setNextId(nextId + 1); }}>Agregar tipo</Action>
+      <Action secondary icon="add" disabled={tickets.length >= 20} onPress={() => { setTickets([...tickets, emptyTicket(nextId)]); setNextId(nextId + 1); }}>Agregar tipo</Action>
       <ErrorText error={error} />
       <Action disabled={saving || user?.role !== "organizer"} onPress={publish}>{saving ? "Publicando…" : "Publicar"}</Action>
     </Screen>

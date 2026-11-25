@@ -5,3 +5,13 @@ export const statuses = {
   CANCELED: "Cancelada",
   REFUNDED: "Reembolsada",
 };
+
+export const statusTones = {
+  PENDING: "amber",
+  CONFIRMED: "green",
+  USED: "neutral",
+  CANCELED: "red",
+  REFUNDED: "blue",
+};
+
+export const isActive = (purchase) => purchase.status === "PENDING" || purchase.status === "CONFIRMED";

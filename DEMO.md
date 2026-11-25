@@ -5,7 +5,7 @@
 1. **0:00–0:45.** Presentá AI Ticket It y las dos cuentas de demo. Entrá como Sofía y abrí *Jazz en el patio*.
 2. **0:45–2:15.** Seleccioná una General, reservá y simulá el pago. Mostrá la compra confirmada y el contador de días. Ese tipo de entrada arranca con un solo cupo.
 3. **2:15–4:00.** Señalá en el editor el botón de reserva en `mobile/src/app/events/[id].jsx`, el cliente en `mobile/src/api.js`, la ruta en `api/src/app.js` y la regla en `api/src/purchases.js`. Explicá por qué se valida y registra el cupo en la misma operación.
-4. **4:00–5:30.** Cancelá la compra y mostrá el estado reembolsado. Volvé al inicio, cambiá a Estudio Sur y abrí las ventas de *Jazz en el patio*. Mostrá el lugar recuperado y la compra en el historial.
+4. **4:00–5:30.** Cancelá la compra y mostrá el estado reembolsado. Volvé a *Mis compras*, tocá el avatar de arriba a la derecha, cambiá a Estudio Sur y abrí las ventas de *Jazz en el patio*. Mostrá el lugar recuperado y la compra en el historial.
 5. **5:30–6:30.** Explicá dónde ayudó la IA, qué requería revisión y qué aprendiste. Usá un ejemplo que realmente puedas defender.
 
 ## Insumos para la reflexión
