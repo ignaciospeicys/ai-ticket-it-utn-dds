@@ -19,4 +19,4 @@ En mobile, las pantallas organizan el flujo y los formularios con estado local. 
 
 El enunciado define los casos de uso. Los roles de demo, la simulación de pagos, el momento en que se marca una entrada como usada y el detalle de las transiciones son decisiones de implementación para el alcance local.
 
-Para el video, el flujo elegido es compra, pago simulado y cancelación con cupo recuperado. Permite mostrar la UI, la petición HTTP, la regla de negocio y el estado resultante. Una cuenta organizadora puede confirmar la recuperación del cupo desde su pantalla.
+El flujo central es compra, pago simulado y cancelación con cupo recuperado. Permite mostrar la UI, la petición HTTP, la regla de negocio y el estado resultante. Una cuenta organizadora puede confirmar la recuperación del cupo desde su pantalla.
